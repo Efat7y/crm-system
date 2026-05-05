@@ -15,7 +15,7 @@ const catalog = ref<{ raw_materials: any[]; fragrances: any[]; colors: any[] }>(
 const orders = ref<any[]>([])
 const submitting = ref(false)
 const orderNotes = ref("")
-const selectedQuantities = reactive<Record<string, number>>({})
+const selectedItems = reactive<Record<string, any>>({})
 
 const allProducts = computed(() => [
   ...catalog.value.raw_materials.map((item) => ({ ...item, category: "raw_material" })),
@@ -42,21 +42,10 @@ const productSections = computed(() => [
 ])
 
 const selectedOrderItems = computed(() =>
-  allProducts.value
-    .filter((item) => isProductSelected(item))
-    .map((item) => {
-      const quantity = getProductQuantity(item)
-      const unitPrice = Number(item.default_price || 0)
-      return {
-        id: item.id,
-        product_name: item.name,
-        category: item.category,
-        quantity,
-        unit: item.default_unit || "",
-        unit_price: unitPrice,
-        total_amount: Number((quantity * unitPrice).toFixed(2))
-      }
-    })
+  Object.values(selectedItems).map((item) => ({
+    ...item,
+    total_amount: Number((Number(item.quantity || 0) * Number(item.unit_price || 0)).toFixed(2))
+  }))
 )
 
 const orderTotal = computed(() =>
@@ -86,26 +75,34 @@ function statusLabel(value: string) {
 }
 
 function isProductSelected(item: any) {
-  return Object.prototype.hasOwnProperty.call(selectedQuantities, productKey(item))
+  return Object.prototype.hasOwnProperty.call(selectedItems, productKey(item))
 }
 
 function getProductQuantity(item: any) {
-  return selectedQuantities[productKey(item)] || 1
+  return Number(selectedItems[productKey(item)]?.quantity || 1)
 }
 
 function ensureSelected(item: any) {
   const key = productKey(item)
-  if (!Object.prototype.hasOwnProperty.call(selectedQuantities, key)) {
-    selectedQuantities[key] = 1
+  if (!Object.prototype.hasOwnProperty.call(selectedItems, key)) {
+    selectedItems[key] = {
+      id: item.id,
+      product_name: item.name,
+      category: item.category,
+      quantity: 1,
+      unit: item.default_unit || "",
+      unit_price: Number(item.default_price || 0)
+    }
   }
 }
 
 function toggleProduct(item: any, checked: boolean) {
   const key = productKey(item)
   if (checked) {
-    selectedQuantities[key] = normalizeQuantity(Number(selectedQuantities[key] || 1))
+    ensureSelected(item)
+    selectedItems[key].quantity = normalizeQuantity(Number(selectedItems[key].quantity || 1))
   } else {
-    delete selectedQuantities[key]
+    delete selectedItems[key]
   }
 }
 
@@ -115,12 +112,16 @@ function onProductCheckboxChange(item: any, event: Event) {
 
 function setProductQuantity(item: any, value: number) {
   ensureSelected(item)
-  selectedQuantities[productKey(item)] = normalizeQuantity(value)
+  selectedItems[productKey(item)].quantity = normalizeQuantity(value)
 }
 
 function updateProductQuantity(item: any, value: string) {
   const parsed = Number.parseFloat(value)
   setProductQuantity(item, Number.isNaN(parsed) ? 1 : parsed)
+}
+
+function onProductQuantityInput(item: any, event: Event) {
+  updateProductQuantity(item, (event.target as HTMLInputElement).value)
 }
 
 function changeProductQuantity(item: any, delta: number) {
@@ -129,17 +130,26 @@ function changeProductQuantity(item: any, delta: number) {
 }
 
 function removeSelectedItem(item: any) {
-  delete selectedQuantities[productKey(item)]
+  delete selectedItems[productKey(item)]
+}
+
+function removeSelectedOrderItem(item: any) {
+  delete selectedItems[`${item.category}::${item.id}`]
 }
 
 function clearSelection() {
-  Object.keys(selectedQuantities).forEach((key) => {
-    delete selectedQuantities[key]
+  Object.keys(selectedItems).forEach((key) => {
+    delete selectedItems[key]
   })
 }
 
 function getSelectedCount(items: any[]) {
   return items.filter((item) => isProductSelected(item)).length
+}
+
+function getProductLineTotal(item: any) {
+  if (!isProductSelected(item)) return 0
+  return Number((getProductQuantity(item) * Number(selectedItems[productKey(item)]?.unit_price || 0)).toFixed(2))
 }
 
 async function loadPortalData() {
@@ -230,11 +240,6 @@ onMounted(loadPortalData)
                   :key="`${section.key}-${item.id}`"
                   class="order-picker-item"
                   :class="{ 'order-picker-item-active': isProductSelected(item) }"
-                  role="button"
-                  tabindex="0"
-                  @click="toggleProduct(item, !isProductSelected(item))"
-                  @keydown.enter.prevent="toggleProduct(item, !isProductSelected(item))"
-                  @keydown.space.prevent="toggleProduct(item, !isProductSelected(item))"
                 >
                   <div class="order-picker-main">
                     <input
@@ -242,16 +247,15 @@ onMounted(loadPortalData)
                       class="order-picker-checkbox"
                       type="checkbox"
                       :checked="isProductSelected(item)"
-                      @click.stop
-                      @change.stop="onProductCheckboxChange(item, $event)"
+                      @change="onProductCheckboxChange(item, $event)"
                     />
-                    <label :for="`order-item-${section.key}-${item.id}`" @click.stop>
+                    <label :for="`order-item-${section.key}-${item.id}`">
                       <strong>{{ item.name }}</strong>
                       <small>{{ t("common.unit") }}: {{ item.default_unit || "-" }}</small>
                     </label>
                   </div>
 
-                  <div class="order-picker-side" @click.stop>
+                  <div class="order-picker-side">
                     <span class="order-picker-price">{{ formatMoney(item.default_price) }}</span>
                     <div class="order-picker-qty-wrap">
                       <button
@@ -270,8 +274,7 @@ onMounted(loadPortalData)
                         :disabled="!isProductSelected(item)"
                         :value="getProductQuantity(item)"
                         @focus="ensureSelected(item)"
-                        @click.stop
-                        @input="updateProductQuantity(item, ($event.target as HTMLInputElement).value)"
+                        @input="onProductQuantityInput(item, $event)"
                       />
                       <button
                         type="button"
@@ -282,6 +285,9 @@ onMounted(loadPortalData)
                         +
                       </button>
                     </div>
+                    <span class="order-picker-line-total">
+                      {{ formatMoney(getProductLineTotal(item)) }}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -340,7 +346,7 @@ onMounted(loadPortalData)
                     <td>{{ formatMoney(item.unit_price) }}</td>
                     <td>{{ formatMoney(item.total_amount) }}</td>
                     <td>
-                      <button type="button" class="danger" @click="removeSelectedItem(item)">{{ t("common.delete") }}</button>
+                      <button type="button" class="danger" @click="removeSelectedOrderItem(item)">{{ t("common.delete") }}</button>
                     </td>
                   </tr>
                 </tbody>

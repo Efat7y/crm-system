@@ -16,10 +16,30 @@ function buildFileName() {
   return `invoice-${order.value?.invoice_number || route.params.id}`
 }
 
-function categoryLabel(category: string) {
-  if (category === "fragrance") return t("ledger.category.fragrance")
-  if (category === "color") return t("ledger.category.color")
-  return t("ledger.category.raw_material")
+const orderItems = computed(() => {
+  if (Array.isArray(order.value?.items) && order.value.items.length) return order.value.items
+  if (!order.value) return []
+
+  return [
+    {
+      product_name: order.value.product_name,
+      category: order.value.category,
+      quantity: order.value.quantity,
+      unit: order.value.unit,
+      unit_price: order.value.unit_price,
+      total_amount: order.value.total_amount
+    }
+  ]
+})
+
+const orderItemsTotal = computed(() =>
+  Number(orderItems.value.reduce((sum, item) => sum + Number(item.total_amount || 0), 0).toFixed(2))
+)
+
+const orderItemsCount = computed(() => order.value?.items_count || orderItems.value.length)
+
+function quantitySummary() {
+  return orderItems.value.map((item) => Number(item.quantity || 0)).join(" + ")
 }
 
 function statusLabel(value: string) {
@@ -140,16 +160,16 @@ await loadOrder()
             <strong>{{ order.invoice_number }}</strong>
           </div>
           <div class="detail-row">
-            <span>{{ t("portal.selected_items") }}</span>
-            <strong>{{ order.products_summary || order.product_name }}</strong>
+            <span>{{ t("order.items_count") }}</span>
+            <strong>{{ orderItemsCount }}</strong>
           </div>
           <div class="detail-row">
-            <span>{{ t("order.items_count") }}</span>
-            <strong>{{ order.items_count }}</strong>
+            <span>{{ t("common.quantity") }}</span>
+            <strong>{{ quantitySummary() }}</strong>
           </div>
           <div class="detail-row">
             <span>{{ t("common.total") }}</span>
-            <strong>{{ formatMoney(order.total_amount) }}</strong>
+            <strong>{{ formatMoney(orderItemsTotal || order.total_amount) }}</strong>
           </div>
           <div class="detail-row">
             <span>{{ t("dashboard.status") }}</span>
@@ -169,32 +189,7 @@ await loadOrder()
 
     <section v-if="order" class="panel" style="margin-top: 14px">
       <h2>{{ t("portal.selected_items") }}</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>{{ t("common.product") }}</th>
-              <th>{{ t("common.category") }}</th>
-              <th>{{ t("common.quantity") }}</th>
-              <th>{{ t("common.unit") }}</th>
-              <th>{{ t("portal.unit_price") }}</th>
-              <th>{{ t("common.total") }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(item, index) in order.items || []" :key="`${item.product_name}-${index}`">
-              <td>{{ index + 1 }}</td>
-              <td>{{ item.product_name }}</td>
-              <td>{{ categoryLabel(item.category) }}</td>
-              <td>{{ item.quantity }}</td>
-              <td>{{ item.unit || "-" }}</td>
-              <td>{{ formatMoney(item.unit_price) }}</td>
-              <td>{{ formatMoney(item.total_amount) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <OrderItemsTable :items="orderItems" :format-money="formatMoney" />
     </section>
 
     <section v-if="order" class="panel" style="margin-top: 14px">

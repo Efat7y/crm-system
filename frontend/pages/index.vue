@@ -121,7 +121,7 @@ onMounted(loadOverview)
 <template>
   <div>
     <PageHeader :title="t('dashboard.title')" :subtitle="t('dashboard.subtitle')" />
-    <DashboardOverview :data="data" :format-money="formatMoney" />
+    <DashboardOverview :data="data" :format-money="formatMoney" @refresh="loadOverview" />
     <HomeSectionCards :raw-materials="sections.raw_materials" :fragrances="sections.fragrances" :colors="sections.colors" />
 
     <section class="grid">

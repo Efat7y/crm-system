@@ -27,10 +27,14 @@ const invoiceItems = computed(() => {
   ]
 })
 
-function categoryLabel(category: string) {
-  if (category === "fragrance") return t("ledger.category.fragrance")
-  if (category === "color") return t("ledger.category.color")
-  return t("ledger.category.raw_material")
+const invoiceItemsTotal = computed(() =>
+  Number(invoiceItems.value.reduce((sum, item) => sum + Number(item.total_amount || 0), 0).toFixed(2))
+)
+
+const invoiceItemsCount = computed(() => props.order.items_count || invoiceItems.value.length)
+
+function quantitySummary() {
+  return invoiceItems.value.map((item) => Number(item.quantity || 0)).join(" + ")
 }
 
 function statusLabel(value: string) {
@@ -93,11 +97,11 @@ function formatDate(value: string | null | undefined) {
       </div>
       <div>
         <span>{{ t("order.items_count") }}</span>
-        <strong>{{ props.order.items_count || invoiceItems.length }}</strong>
+        <strong>{{ invoiceItemsCount }}</strong>
       </div>
       <div>
         <span>{{ t("common.total") }}</span>
-        <strong>{{ props.formatMoney(props.order.total_amount) }}</strong>
+        <strong>{{ props.formatMoney(invoiceItemsTotal || props.order.total_amount) }}</strong>
       </div>
     </div>
 
@@ -132,12 +136,12 @@ function formatDate(value: string | null | undefined) {
         <h3>{{ t("order.order_information") }}</h3>
         <div class="detail-list">
           <div class="detail-row">
-            <span>{{ t("portal.selected_items") }}</span>
-            <strong>{{ props.order.products_summary || props.order.product_name || "-" }}</strong>
+            <span>{{ t("order.items_count") }}</span>
+            <strong>{{ invoiceItemsCount }}</strong>
           </div>
           <div class="detail-row">
-            <span>{{ t("order.items_count") }}</span>
-            <strong>{{ props.order.items_count || invoiceItems.length }}</strong>
+            <span>{{ t("common.quantity") }}</span>
+            <strong>{{ quantitySummary() }}</strong>
           </div>
           <div class="detail-row">
             <span>{{ t("dashboard.status") }}</span>
@@ -151,32 +155,10 @@ function formatDate(value: string | null | undefined) {
       </section>
     </div>
 
-    <div class="table-wrap" style="margin-top: 14px">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>{{ t("common.product") }}</th>
-            <th>{{ t("common.category") }}</th>
-            <th>{{ t("common.quantity") }}</th>
-            <th>{{ t("common.unit") }}</th>
-            <th>{{ t("portal.unit_price") }}</th>
-            <th>{{ t("common.total") }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(item, index) in invoiceItems" :key="`${item.product_name}-${index}`">
-            <td>{{ index + 1 }}</td>
-            <td>{{ item.product_name }}</td>
-            <td>{{ categoryLabel(item.category) }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>{{ item.unit || "-" }}</td>
-            <td>{{ props.formatMoney(item.unit_price) }}</td>
-            <td>{{ props.formatMoney(item.total_amount) }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <section class="invoice-items-section">
+      <h3>{{ t("portal.selected_items") }}</h3>
+      <OrderItemsTable :items="invoiceItems" :format-money="props.formatMoney" />
+    </section>
 
     <section class="panel-soft invoice-notes" style="margin-top: 14px">
       <h3>{{ t("order.order_notes") }}</h3>
@@ -185,7 +167,7 @@ function formatDate(value: string | null | undefined) {
 
     <div class="invoice-total">
       <span>{{ t("common.total") }}</span>
-      <strong>{{ props.formatMoney(props.order.total_amount) }}</strong>
+      <strong>{{ props.formatMoney(invoiceItemsTotal || props.order.total_amount) }}</strong>
     </div>
   </section>
 </template>

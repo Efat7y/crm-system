@@ -41,20 +41,20 @@ async function logout() {
 </script>
 
 <template>
-  <aside class="side-nav panel">
-    <div class="side-top">
+  <aside class="side-nav panel static lg:sticky">
+    <div class="side-top flex flex-wrap items-center justify-between gap-2">
       <h2>ABE</h2>
       <LanguageToggle />
     </div>
     <p class="subtitle">{{ t("nav.welcome") }} {{ user?.name || t("nav.user") }}</p>
 
-    <nav class="side-links">
+    <nav class="side-links grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
       <template v-if="user?.role === 'admin'">
         <NuxtLink
           v-for="link in adminLinks"
           :key="link.to"
           :to="link.to"
-          class="side-link"
+          class="side-link min-h-11 break-words text-sm sm:text-base"
           :class="{ active: isLinkActive(link.to) }"
         >
           {{ link.label }}
@@ -65,7 +65,7 @@ async function logout() {
           v-for="link in sectionLinks"
           :key="link.to"
           :to="link.to"
-          class="side-link side-link-sub"
+          class="side-link side-link-sub min-h-11 break-words text-sm sm:text-base"
           :class="{ active: isLinkActive(link.to) }"
         >
           {{ link.label }}
@@ -77,14 +77,14 @@ async function logout() {
           v-for="link in customerLinks"
           :key="link.to"
           :to="link.to"
-          class="side-link"
+          class="side-link min-h-11 break-words text-sm sm:text-base"
           :class="{ active: isLinkActive(link.to) }"
         >
           {{ link.label }}
         </NuxtLink>
       </template>
 
-      <button class="side-link logout-btn" type="button" @click="logout">{{ t("nav.logout") }}</button>
+      <button class="side-link logout-btn min-h-11 break-words text-sm sm:text-base" type="button" @click="logout">{{ t("nav.logout") }}</button>
     </nav>
   </aside>
 </template>
