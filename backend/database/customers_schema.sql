@@ -1,0 +1,19 @@
+CREATE DATABASE IF NOT EXISTS crm
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE crm;
+
+CREATE TABLE IF NOT EXISTS customers (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(120) NULL,
+  phone VARCHAR(30) NULL,
+  company VARCHAR(120) NULL,
+  address VARCHAR(255) NULL,
+  notes TEXT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_customers_email (email),
+  KEY idx_customers_name (name),
+  KEY idx_customers_phone (phone)
+);
