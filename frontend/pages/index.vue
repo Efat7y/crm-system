@@ -124,7 +124,7 @@ onMounted(loadOverview)
     <DashboardOverview :data="data" :format-money="formatMoney" @refresh="loadOverview" />
     <HomeSectionCards :raw-materials="sections.raw_materials" :fragrances="sections.fragrances" :colors="sections.colors" />
 
-    <section class="grid">
+    <section class="content-grid dashboard-panels">
       <section class="panel">
         <h2>{{ t("dashboard.updates") }}</h2>
         <form class="form-grid compact" @submit.prevent="addUpdate">

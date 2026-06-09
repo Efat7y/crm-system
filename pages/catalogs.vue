@@ -75,7 +75,7 @@ onMounted(async () => {
 <template>
   <div>
     <PageHeader :title="t('catalog.title')" :subtitle="t('catalog.subtitle')" />
-    <section class="grid catalogs-grid">
+    <section class="content-grid catalogs-grid">
       <CatalogSection
         :title="t('catalog.raw_title')"
         :subtitle="t('catalog.raw_sub')"

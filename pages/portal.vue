@@ -194,7 +194,7 @@ onMounted(loadPortalData)
   <div>
     <PageHeader :title="`${t('portal.title')} - ${auth.user.value?.name || ''}`" :subtitle="t('portal.subtitle')" />
 
-    <section class="grid catalogs-grid">
+    <section class="content-grid catalogs-grid">
       <section class="panel">
         <h2>{{ t("portal.latest_updates") }}</h2>
         <div class="chips">

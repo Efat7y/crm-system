@@ -65,7 +65,7 @@ async function saveQuickPayment(customerId: number, balanceDue: number) {
 </script>
 
 <template>
-  <section class="grid">
+  <section class="content-grid">
     <div class="panel kpi">
       <span>{{ t("kpi.customers") }}</span>
       <strong>{{ props.data?.summary?.customers_count ?? 0 }}</strong>

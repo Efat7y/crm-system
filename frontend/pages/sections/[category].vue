@@ -98,7 +98,7 @@ watch(
       <p>{{ t("section.not_found") }}</p>
     </section>
 
-    <section v-else class="grid catalogs-grid">
+    <section v-else class="content-grid catalogs-grid">
       <section class="panel">
         <h2>{{ editingId ? t("section.edit_item") : t("section.add_item") }}</h2>
         <form class="form-grid compact" @submit.prevent="saveItem">

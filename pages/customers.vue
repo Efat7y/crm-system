@@ -113,7 +113,7 @@ onMounted(async () => {
 <template>
   <div>
     <PageHeader :title="t('customers.title')" :subtitle="t('customers.subtitle')" />
-    <section class="grid customers-grid">
+    <section class="content-grid customers-grid">
       <CustomerForm v-model="customerForm" :is-edit="Boolean(customerForm.id)" @submit="saveCustomer" @reset="clearCustomerForm" />
       <CustomersTable
         :customers="customers"
